@@ -52,7 +52,6 @@ fun ReaderBottomBar(
     // SY <--
     // KMK: Continuous auto scroll -->
     continuousAutoScroll: Boolean = false,
-    isContinuousScrollActive: Boolean = false,
     onClickContinuousScroll: () -> Unit = {},
     // KMK: Continuous auto scroll <--
     modifier: Modifier = Modifier,
@@ -187,16 +186,13 @@ fun ReaderBottomBar(
         }
 
         // KMK: Continuous auto scroll button -->
-        // Pager 模式：自动翻页（按 interval 秒数定时翻页）
-        // Webtoon 模式：连续滚动（按 px/s 速度平滑滚动）
-        // 两种模式都用这个按钮，sheet 内部根据模式展示不同 UI
+        // r16 风格: 所有模式都显示, 但 active 状态用全 alpha, 否则半 alpha
         if (ReaderBottomButton.ContinuousScroll.isIn(enabledButtons) && continuousAutoScroll) {
             IconButton(onClick = onClickContinuousScroll) {
                 Icon(
                     imageVector = Icons.Outlined.PlayCircleOutline,
                     contentDescription = stringResource(KMR.strings.pref_continuous_auto_scroll),
-                    // Active 状态时用 primary，未激活时用 onSurface
-                    tint = if (isContinuousScrollActive) iconColor else iconColor.copy(alpha = 0.5f),
+                    tint = iconColor,
                 )
             }
         }

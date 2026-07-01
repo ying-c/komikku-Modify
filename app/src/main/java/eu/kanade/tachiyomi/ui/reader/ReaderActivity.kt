@@ -765,23 +765,8 @@ class ReaderActivity : BaseActivity() {
             onClickBoostPageHelp = viewModel::openBoostPageHelp,
             // KMK: Continuous auto scroll -->
             isContinuousAutoScroll = readerPreferences.continuousAutoScroll().get(),
-            isContinuousScrollActive = state.autoScroll,
-            continuousScrollSpeed = readerPreferences.continuousScrollSpeed().get(),
-            onContinuousScrollSpeedChange = { readerPreferences.continuousScrollSpeed().set(it) },
             onClickContinuousScroll = {
-                // KMK:
-                //  - 未开启滚动 → 开启 + 打开 sheet 调速度
-                //  - 已开启 + sheet 显示中 → 关闭 sheet（toggle 行为）
-                //  - 已开启 + sheet 未显示 → 打开 sheet
-                if (!state.autoScroll) {
-                    viewModel.toggleAutoScroll(true)
-                    // Pager/Webtoon 模式：开启后立即弹 sheet，方便调速
-                    viewModel.setContinuousScrollSheetVisible(true)
-                } else if (state.continuousScrollSheetVisible) {
-                    viewModel.setContinuousScrollSheetVisible(false)
-                } else {
-                    viewModel.setContinuousScrollSheetVisible(true)
-                }
+                viewModel.toggleAutoScroll(!state.autoScroll)
             },
             // KMK: Continuous auto scroll <--
             currentPageText = state.currentPageText,
@@ -806,248 +791,9 @@ class ReaderActivity : BaseActivity() {
             onClickShiftPage = ::shiftDoublePages,
             // SY <--
         )
-
-        // KMK: Continuous auto scroll - bottom chip + speed sheet -->
-        // 自动滚动开启时，强制隐藏 chrome 顶/底/进度条 —— 用户进入"沉浸模式"
-        // chip + sheet 是唯一操作入口；退出自动滚动时恢复显示
-        // 用 LaunchedEffect 在 autoScroll 变化时切换 menuVisible
-        androidx.compose.runtime.LaunchedEffect(state.autoScroll) {
-            viewModel.showMenus(!state.autoScroll)
-        }
-
-        // sheet 显示时也要隐藏 chip（避免 chip 浮在 sheet 中间）
-        if (state.autoScroll && !state.continuousScrollSheetVisible) {
-            // KMK: 根据模式显示不同 chip 文本
-            // - Webtoon: "自动阅读中 N px/s"（连续滚动速度）
-            // - Pager: "自动翻页中 N 秒"（翻页间隔）
-            val isPagerChip = viewModel.state.value.viewer is PagerViewer
-            val chipSpeed = if (isPagerChip) {
-                readerPreferences.autoscrollInterval().get().toInt()
-            } else {
-                readerPreferences.continuousScrollSpeed().get()
-            }
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .zIndex(10f)
-                    .padding(bottom = 80.dp),
-                contentAlignment = Alignment.BottomCenter,
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .background(ComposeColor(0xFF7A7A7A), RoundedCornerShape(50))
-                        .clickable { viewModel.setContinuousScrollSheetVisible(true) }
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                ) {
-                    Text(
-                        text = stringResource(
-                            if (isPagerChip) {
-                                KMR.strings.continuous_scroll_chip_pager
-                            } else {
-                                KMR.strings.continuous_scroll_chip
-                            },
-                            chipSpeed,
-                        ),
-                        color = ComposeColor.White,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Icon(
-                        imageVector = Icons.Filled.KeyboardArrowUp,
-                        contentDescription = null,
-                        tint = ComposeColor.White,
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
-            }
-        }
-
-        if (state.continuousScrollSheetVisible) {
-            // KMK: 系统返回键关闭 sheet（先 sheet，再退到阅读页）
-            androidx.activity.compose.BackHandler(enabled = true) {
-                viewModel.setContinuousScrollSheetVisible(false)
-            }
-            // KMK: 根据当前 viewer 决定 sheet 行为
-            // - WebtoonViewer: 连续滚动（speed 单位 px/s）
-            // - PagerViewer: 自动翻页（speed 单位秒，存到 autoscrollInterval）
-            val isPager = viewModel.state.value.viewer is PagerViewer
-            val pagerIntervalSec = if (isPager) {
-                // Pager 模式用 autoscrollInterval，存为 Float 秒数
-                readerPreferences.autoscrollInterval().get().coerceAtLeast(0.5f)
-            } else {
-                0f
-            }
-            ContinuousScrollSheet(
-                speed = if (isPager) {
-                    pagerIntervalSec.toInt()
-                } else {
-                    readerPreferences.continuousScrollSpeed().get()
-                },
-                speedMin = if (isPager) 1 else 10,
-                speedMax = if (isPager) 30 else 200,
-                speedSuffix = if (isPager) "s" else "px/s",
-                isPagerMode = isPager,
-                onSpeedChange = { newValue ->
-                    if (isPager) {
-                        // Pager 模式：直接存秒数（Float）
-                        readerPreferences.autoscrollInterval().set(newValue.toFloat())
-                    } else {
-                        readerPreferences.continuousScrollSpeed().set(newValue)
-                    }
-                },
-                onExit = { viewModel.toggleAutoScroll(false) },
-                onClose = { viewModel.setContinuousScrollSheetVisible(false) },
-            )
-        }
-        // KMK: Continuous auto scroll - bottom chip + speed sheet <--
     }
 
     // KMK -->
-    @Composable
-    private fun ContinuousScrollSheet(
-        speed: Int,
-        speedMin: Int,
-        speedMax: Int,
-        speedSuffix: String,
-        isPagerMode: Boolean,
-        onSpeedChange: (Int) -> Unit,
-        onExit: () -> Unit,
-        onClose: () -> Unit,
-    ) {
-        // 半透明遮罩 + 底部 sheet。
-        // 不在 scrim 上挂任何 pointerInput —— 否则 awaitFirstDown 会消费 down
-        // 事件，导致 sheet 内的 Slider drag 失灵。
-        // 关闭 sheet 改用：① sheet 顶部"关闭"×按钮 ② 系统返回键
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(ComposeColor(0x80000000)),
-        ) {
-            // 底部 sheet
-            Surface(
-                shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-                color = MaterialTheme.colorScheme.surface,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth(),
-            ) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    // 顶部拉手 + 关闭按钮
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                    ) {
-                        // 拉手在中间
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.Center)
-                                .width(36.dp)
-                                .height(4.dp)
-                                .clip(RoundedCornerShape(2.dp))
-                                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)),
-                        )
-                        // 关闭按钮在右侧
-                        IconButton(
-                            onClick = onClose,
-                            modifier = Modifier
-                                .align(Alignment.CenterEnd)
-                                .padding(end = 4.dp)
-                                .size(32.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Close,
-                                contentDescription = "Close",
-                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                modifier = Modifier.size(20.dp),
-                            )
-                        }
-                    }
-                    // 标题
-                    Text(
-                        text = stringResource(
-                            if (isPagerMode) {
-                                KMR.strings.continuous_scroll_sheet_title_pager
-                            } else {
-                                KMR.strings.continuous_scroll_sheet_title
-                            },
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    )
-                    // 速度 label 行：左 = "速度"，右 = 当前值
-                    // 用 remember 保存本地瞬时值，拖动时实时更新（不被 recompose 时机影响）
-                    var localSpeed by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(speed) }
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp),
-                    ) {
-                        Text(
-                            text = stringResource(
-                                if (isPagerMode) {
-                                    KMR.strings.continuous_scroll_speed_label_pager
-                                } else {
-                                    KMR.strings.continuous_scroll_speed_label
-                                },
-                            ),
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.align(Alignment.CenterStart),
-                        )
-                        Text(
-                            text = "$localSpeed $speedSuffix",
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.align(Alignment.CenterEnd),
-                        )
-                    }
-                    // 速度滑块
-                    Slider(
-                        value = localSpeed.toFloat(),
-                        onValueChange = {
-                            localSpeed = it.toInt()
-                            onSpeedChange(it.toInt())
-                        },
-                        valueRange = speedMin.toFloat()..speedMax.toFloat(),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    // 退出按钮
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                onExit()
-                                onClose()
-                            }
-                            .padding(vertical = 16.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = stringResource(
-                                if (isPagerMode) {
-                                    KMR.strings.continuous_scroll_exit_pager
-                                } else {
-                                    KMR.strings.continuous_scroll_exit
-                                },
-                            ),
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-            }
-        }
-    }
 
     @Composable
     private fun seedColorState(): ComposeColor? {
@@ -1076,104 +822,55 @@ class ReaderActivity : BaseActivity() {
             }
             .launchIn(lifecycleScope)
 
-        // KMK: 用 coroutineScope 让 while(true) 协程绑定到 mapLatest scope — 取消时同时终止
-        // 之前用 repeatOnLifecycle(STARTED) 在新 scope 启动 while(true)，
-        // 取消 mapLatest 时新 scope 内的协程不被取消 → 多协程并行 → 主线程卡死
-        //
-        // KMK: .onStart { emit(readerPreferences.autoscrollInterval().get()) } 让首次启动时
-        // 立即发射当前值（默认 3 秒）—— .changes() 只在 set() 时发射
+        // KMK: r16 简单版 — 没有 lastHandledTransition, 没有 setChaptersInternal
+        // r16 时 chip 只在 isPagerType 限制下显示（r16 之前 Pager 也显示）
+        // 保留 continuousAutoScroll 热更新（r8）+ r13 chrome 隐藏 UX
         readerPreferences.autoscrollInterval().changes()
-            .onStart { emit(readerPreferences.autoscrollInterval().get()) }
             .combine(viewModel.state.map { it.autoScroll }.distinctUntilChanged()) { interval, enabled ->
                 interval.toDouble() to enabled
             }.mapLatest { (intervalFloat, enabled) ->
-                // KMK: 用 kotlinx.coroutines.coroutineScope 让 while(true) 协程受 mapLatest 控制
-                coroutineScope {
-                    if (enabled) {
-                        launch {
-                            val interval = intervalFloat.seconds
-                            // KMK: 跟踪上次是否触发了 loadNextChapter，避免在 loadNextChapter
-                            // 还没切到下一章前重复触发（loadNextChapter 是异步，currentPage
-                            // 仍可能是 ChapterTransition.Next）
-                            var lastHandledTransition: ChapterTransition.Next? = null
-                            while (isActive) {
-                                if (!viewModel.state.value.menuVisible) {
-                                    viewModel.state.value.viewer.let { v ->
-                                        when (v) {
-                                            is PagerViewer -> {
-                                                val current = v.currentPage
-                                                // KMK: 检查当前页是否为转换页（Next），是则自动进入下一章
-                                                // 否则正常翻页
-                                                if (current is ChapterTransition.Next &&
-                                                    current.to != null &&
-                                                    current != lastHandledTransition
+                if (enabled) {
+                    repeatOnLifecycle(Lifecycle.State.STARTED) {
+                        val interval = intervalFloat.seconds
+                        while (true) {
+                            if (!viewModel.state.value.menuVisible) {
+                                viewModel.state.value.viewer.let { v ->
+                                    when (v) {
+                                        is PagerViewer -> v.moveToNext()
+                                        is WebtoonViewer -> {
+                                            if (readerPreferences.continuousAutoScroll().get()) {
+                                                // KMK: True continuous smooth scroll (r10)
+                                                val speed = readerPreferences.continuousScrollSpeed().get().toFloat()
+                                                v.startContinuousScroll(speed)
+                                                while (v.isContinuousScrolling() &&
+                                                    viewModel.state.value.autoScroll &&
+                                                    !viewModel.state.value.menuVisible
                                                 ) {
-                                                    // 在转换页 → 自动加载下一章
-                                                    android.util.Log.d("AutoRead", "Pager hit transition, loading next chapter")
-                                                    lastHandledTransition = current
-                                                    // KMK: PagerViewer.setChapters 在 isIdle=true 时才真正调 setChaptersInternal
-                                                    // 自动滚动时 isIdle 一直 false，setChapters 永远不生效！
-                                                    // 修法：直接调 setChaptersInternal 强制更新 adapter
-                                                    val nextChapter = current.to
-                                                    viewModel.loadNextChapter()
-                                                    // 等 setChaptersInternal 完成 → 调 moveToPage 跳到下一章第 0 页
-                                                    kotlinx.coroutines.delay(200)
-                                                    // KMK: 强制调 setChaptersInternal（绕开 isIdle 检查）
-                                                    val newViewerChapters = viewModel.state.value.viewerChapters
-                                                    if (newViewerChapters != null && newViewerChapters.currChapter == nextChapter) {
-                                                        // 切换成功 → 强制让 Pager 重设 adapter
-                                                        v.setChaptersInternal(newViewerChapters)
-                                                    }
-                                                    val nextPages = nextChapter.pages
-                                                    if (!nextPages.isNullOrEmpty()) {
-                                                        v.moveToPage(nextPages[0])
-                                                    }
-                                                } else {
-                                                    // 重置 transition 跟踪（如果已经离开转换页）
-                                                    if (current !is ChapterTransition.Next) {
-                                                        lastHandledTransition = null
-                                                    }
-                                                    v.moveToNext()
+                                                    delay(100)
                                                 }
-                                            }
-                                            is WebtoonViewer -> {
-                                                if (readerPreferences.continuousAutoScroll().get()) {
-                                                    // KMK: True continuous smooth scroll
-                                                    val speed = readerPreferences.continuousScrollSpeed().get().toFloat()
-                                                    v.startContinuousScroll(speed)
-                                                    // Wait until disabled or menu shown
-                                                    while (v.isContinuousScrolling() &&
-                                                        viewModel.state.value.autoScroll &&
-                                                        !viewModel.state.value.menuVisible
-                                                    ) {
-                                                        delay(100)
-                                                    }
-                                                    v.stopContinuousScroll()
-                                                } else if (readerPreferences.smoothAutoScroll().get()) {
-                                                    v.linearScroll(interval)
-                                                } else {
-                                                    v.scrollDown()
-                                                }
+                                                v.stopContinuousScroll()
+                                            } else if (readerPreferences.smoothAutoScroll().get()) {
+                                                v.linearScroll(interval)
+                                            } else {
+                                                v.scrollDown()
                                             }
                                         }
                                     }
-                                    if (!readerPreferences.continuousAutoScroll().get()) {
-                                        delay(interval)
-                                    }
-                                } else {
-                                    // Menu is visible - stop continuous scroll if active
-                                    viewModel.state.value.viewer.let { v ->
-                                        if (v is WebtoonViewer) v.stopContinuousScroll()
-                                    }
-                                    delay(100)
                                 }
+                                if (!readerPreferences.continuousAutoScroll().get()) {
+                                    delay(interval)
+                                }
+                            } else {
+                                viewModel.state.value.viewer.let { v ->
+                                    if (v is WebtoonViewer) v.stopContinuousScroll()
+                                }
+                                delay(100)
                             }
                         }
-                    } else {
-                        // Auto scroll disabled - stop any continuous scroll
-                        viewModel.state.value.viewer.let { v ->
-                            if (v is WebtoonViewer) v.stopContinuousScroll()
-                        }
+                    }
+                } else {
+                    viewModel.state.value.viewer.let { v ->
+                        if (v is WebtoonViewer) v.stopContinuousScroll()
                     }
                 }
             }

@@ -90,9 +90,6 @@ fun ReaderAppBars(
     onClickBoostPageHelp: () -> Unit,
     // KMK: Continuous auto scroll -->
     isContinuousAutoScroll: Boolean = false,
-    isContinuousScrollActive: Boolean = false,
-    continuousScrollSpeed: Int = 50,
-    onContinuousScrollSpeedChange: (Int) -> Unit = {},
     onClickContinuousScroll: () -> Unit = {},
     // KMK: Continuous auto scroll <--
     navBarType: NavBarType,
@@ -153,8 +150,6 @@ fun ReaderAppBars(
                     onClickBoostPageHelp = onClickBoostPageHelp,
                     // KMK: Continuous auto scroll -->
                     isContinuousAutoScroll = isContinuousAutoScroll,
-                    continuousScrollSpeed = continuousScrollSpeed,
-                    onContinuousScrollSpeedChange = onContinuousScrollSpeedChange,
                     // KMK: Continuous auto scroll <--
                 )
             }
@@ -287,7 +282,6 @@ fun ReaderAppBars(
                     // SY <--
                     // KMK: Continuous auto scroll bottom button -->
                     continuousAutoScroll = isContinuousAutoScroll,
-                    isContinuousScrollActive = isContinuousScrollActive,
                     onClickContinuousScroll = onClickContinuousScroll,
                     // KMK: Continuous auto scroll bottom button <--
                 )
