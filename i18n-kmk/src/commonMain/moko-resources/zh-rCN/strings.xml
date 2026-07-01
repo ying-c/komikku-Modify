@@ -177,4 +177,18 @@
     <string name="discord_status_scrolling">滚动通过</string>
     <string name="discord_accounts">Discord 账户</string>
     <string name="active_account">活动账户</string>
+    <!-- Continuous Auto Scroll -->
+    <string name="pref_continuous_auto_scroll">连续自动滚动</string>
+    <string name="pref_continuous_auto_scroll_summary">页面内容持续平滑向上移动，像视频播放一样</string>
+    <string name="pref_continuous_scroll_speed">滚动速度</string>
+    <string name="pref_continuous_scroll_speed_slow">慢</string>
+    <string name="pref_continuous_scroll_speed_fast">快</string>
+    <string name="continuous_scroll_chip">自动阅读中 %1$d px/s</string>
+    <string name="continuous_scroll_chip_pager">自动翻页中 %1$d 秒</string>
+    <string name="continuous_scroll_sheet_title">连续自动滚动</string>
+    <string name="continuous_scroll_sheet_title_pager">自动翻页</string>
+    <string name="continuous_scroll_exit">退出自动阅读</string>
+    <string name="continuous_scroll_exit_pager">退出自动翻页</string>
+    <string name="continuous_scroll_speed_label">速度</string>
+    <string name="continuous_scroll_speed_label_pager">间隔（秒）</string>
 </resources>

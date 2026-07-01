@@ -238,4 +238,18 @@
     <string name="pref_discord_show_download_button_summary">Displays a button to download the app</string>
     <string name="pref_discord_show_discord_button">Show Discord Button</string>
     <string name="pref_discord_show_discord_button_summary">Displays a button to join the Discord server</string>
+    <!-- Continuous Auto Scroll -->
+    <string name="pref_continuous_auto_scroll">Continuous Auto Scroll</string>
+    <string name="pref_continuous_auto_scroll_summary">Page moves up smoothly and continuously, like a video</string>
+    <string name="pref_continuous_scroll_speed">Scroll speed</string>
+    <string name="pref_continuous_scroll_speed_slow">Slow</string>
+    <string name="pref_continuous_scroll_speed_fast">Fast</string>
+    <string name="continuous_scroll_chip">Auto Scrolling %1$d px/s</string>
+    <string name="continuous_scroll_chip_pager">Auto Turning %1$d s</string>
+    <string name="continuous_scroll_sheet_title">Continuous Auto Scroll</string>
+    <string name="continuous_scroll_sheet_title_pager">Auto Page Turn</string>
+    <string name="continuous_scroll_exit">Stop Auto Scroll</string>
+    <string name="continuous_scroll_exit_pager">Stop Auto Turn</string>
+    <string name="continuous_scroll_speed_label">Speed</string>
+    <string name="continuous_scroll_speed_label_pager">Interval (s)</string>
 </resources>

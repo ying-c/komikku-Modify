@@ -1117,6 +1117,12 @@ class ReaderViewModel @JvmOverloads constructor(
         mutableState.update { it.copy(ehUtilsVisible = visible) }
     }
 
+    // KMK: Continuous auto scroll sheet -->
+    fun setContinuousScrollSheetVisible(visible: Boolean) {
+        mutableState.update { it.copy(continuousScrollSheetVisible = visible) }
+    }
+    // KMK: Continuous auto scroll sheet <--
+
     fun setIndexChapterToShift(index: Long?) {
         mutableState.update { it.copy(indexChapterToShift = index) }
     }
@@ -1497,6 +1503,9 @@ class ReaderViewModel @JvmOverloads constructor(
         val isAutoScrollEnabled: Boolean = false,
         val ehAutoscrollFreq: String = "",
         // SY <--
+        // KMK: Continuous auto scroll sheet -->
+        val continuousScrollSheetVisible: Boolean = false,
+        // KMK: Continuous auto scroll sheet <--
     ) {
         val currentChapter: ReaderChapter?
             get() = viewerChapters?.currChapter

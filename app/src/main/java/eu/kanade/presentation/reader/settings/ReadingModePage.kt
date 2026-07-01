@@ -273,6 +273,28 @@ private fun WebtoonViewerSettings(
         pref = screenModel.preferences.smoothAutoScroll(),
     )
 
+    // KMK: Continuous auto scroll -->
+    CheckboxItem(
+        label = stringResource(KMR.strings.pref_continuous_auto_scroll),
+        pref = screenModel.preferences.continuousAutoScroll(),
+    )
+
+    val continuousAutoScroll by screenModel.preferences.continuousAutoScroll().collectAsState()
+    if (continuousAutoScroll) {
+        val continuousScrollSpeed by screenModel.preferences.continuousScrollSpeed().collectAsState()
+        SliderItem(
+            value = continuousScrollSpeed,
+            valueRange = 10..200,
+            label = stringResource(KMR.strings.pref_continuous_scroll_speed),
+            valueString = "$continuousScrollSpeed px/s",
+            onChange = {
+                screenModel.preferences.continuousScrollSpeed().set(it)
+            },
+            pillColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+        )
+    }
+    // KMK: Continuous auto scroll <--
+
     CheckboxItem(
         label = stringResource(MR.strings.pref_page_transitions),
         pref = screenModel.preferences.pageTransitionsWebtoon(),

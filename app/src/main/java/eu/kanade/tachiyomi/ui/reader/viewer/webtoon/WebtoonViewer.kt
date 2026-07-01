@@ -22,8 +22,13 @@ import eu.kanade.tachiyomi.ui.reader.model.ViewerChapters
 import eu.kanade.tachiyomi.ui.reader.setting.ReaderPreferences
 import eu.kanade.tachiyomi.ui.reader.viewer.Viewer
 import eu.kanade.tachiyomi.ui.reader.viewer.ViewerNavigation.NavigationRegion
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import tachiyomi.core.common.util.system.logcat
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -252,6 +257,7 @@ class WebtoonViewer(
      */
     override fun destroy() {
         super.destroy()
+        stopContinuousScroll()
         scope.cancel()
     }
 
@@ -355,6 +361,99 @@ class WebtoonViewer(
             duration.inWholeMilliseconds.toInt(),
         )
     }
+
+    // KMK: Continuous auto scroll -->
+    private var continuousScrollJob: Job? = null
+
+    /**
+     * 滚动速度（px/s），协程每帧重读以支持实时调速。
+     * 保留 var 字段：startContinuousScroll 修改它，热重启不需要。
+     */
+    private var continuousScrollSpeedPxPerSec: Float = 50f
+
+    /**
+     * Start continuous smooth scrolling at the given speed (pixels per second).
+     * Pages will move upward continuously like a video, no jumping or pausing.
+     * 多次调用：更新速度字段，热重启 job。
+     */
+    fun startContinuousScroll(speedPxPerSec: Float) {
+        continuousScrollSpeedPxPerSec = speedPxPerSec
+        if (continuousScrollJob?.isActive == true) {
+            // 协程已在运行：仅更新速度字段，下一帧自动应用
+            return
+        }
+        continuousScrollJob = scope.launch {
+            // 用 Choreographer 同步 vsync，累加器按真实帧时间计算位移。
+            // 之前用 delay(16) + scrollBy(int) 会有两个问题：
+            // 1) delay(16) 不跟 vsync 对齐，帧间隔抖动 (15-17ms)
+            // 2) scrollBy(int) 把 speed/60 截断成 int，慢速时精度丢失甚至为 0
+            //
+            // 注意：不能用 withFrameNanos —— WebtoonViewer 的 scope 是 MainScope()
+            // （不绑定 Compose），没有 MonotonicFrameClock，调用会抛
+            // IllegalStateException。Choreographer 是 Android 平台 API，WorkThread
+            // 即可用，且与 RecyclerView 的渲染循环完全同步。
+            var lastFrameNanos = 0L
+            // 速度改为 Float 累加：每帧加 (speed * frameDeltaSec)，丢弃小数部分
+            // 这样低速（10px/s ≈ 0.17 px/frame）也能平滑滚动
+            val accumulator = FloatArray(1)
+            while (isActive) {
+                val frameNanos = awaitChoreographerFrame()
+                if (lastFrameNanos == 0L) {
+                    lastFrameNanos = frameNanos
+                    continue
+                }
+                val deltaSec = (frameNanos - lastFrameNanos) / 1_000_000_000f
+                lastFrameNanos = frameNanos
+                val speedNow = continuousScrollSpeedPxPerSec
+                // 累加亚像素位移，凑够 1px 才滚动 → 避免抖动
+                accumulator[0] += speedNow * deltaSec
+                val pixelsToScroll = accumulator[0].toInt()
+                if (pixelsToScroll > 0) {
+                    recycler.scrollBy(0, pixelsToScroll)
+                    accumulator[0] -= pixelsToScroll
+                }
+            }
+        }
+    }
+
+    /**
+     * 通过 Choreographer 等待下一帧 vsync，返回 frame 时间（nanos）。
+     * suspend 函数，用 CompletableDeferred 桥接 Choreographer 回调。
+     * 比 withFrameNanos 通用（不依赖 Compose），比 delay(16) 精准。
+     */
+    private suspend fun awaitChoreographerFrame(): Long =
+        suspendCancellableCoroutine { cont ->
+            val callback = object : android.view.Choreographer.FrameCallback {
+                override fun doFrame(frameTimeNanos: Long) {
+                    if (cont.isActive) cont.resume(frameTimeNanos) { _, _, _ -> }
+                }
+            }
+            android.view.Choreographer.getInstance().postFrameCallback(callback)
+            cont.invokeOnCancellation {
+                android.view.Choreographer.getInstance().removeFrameCallback(callback)
+            }
+        }
+
+    /**
+     * 仅更新速度，不重启 job（热更新）。如果 job 没在跑则忽略。
+     */
+    fun updateContinuousScrollSpeed(speedPxPerSec: Float) {
+        continuousScrollSpeedPxPerSec = speedPxPerSec
+    }
+
+    /**
+     * Stop continuous scrolling.
+     */
+    fun stopContinuousScroll() {
+        continuousScrollJob?.cancel()
+        continuousScrollJob = null
+    }
+
+    /**
+     * Check if continuous scroll is active.
+     */
+    fun isContinuousScrolling(): Boolean = continuousScrollJob?.isActive == true
+    // KMK: Continuous auto scroll <--
 
     /**
      * Scrolls down by [scrollDistance].

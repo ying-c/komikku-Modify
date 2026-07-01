@@ -184,6 +184,10 @@ class ReaderPreferences(
 
     fun smoothAutoScroll() = preferenceStore.getBoolean("smooth_auto_scroll", true)
 
+    fun continuousAutoScroll() = preferenceStore.getBoolean("continuous_auto_scroll", false)
+
+    fun continuousScrollSpeed() = preferenceStore.getInt("continuous_scroll_speed", 50) // px/sec
+
     fun preserveReadingPosition() = preferenceStore.getBoolean("eh_preserve_reading_position", false)
 
     fun preloadSize() = preferenceStore.getInt("eh_preload_size", 10)

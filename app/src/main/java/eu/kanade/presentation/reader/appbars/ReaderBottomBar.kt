@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.FormatListNumbered
+import androidx.compose.material.icons.outlined.PlayCircleOutline
 import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Share
@@ -22,6 +23,7 @@ import eu.kanade.tachiyomi.ui.reader.setting.ReaderOrientation
 import eu.kanade.tachiyomi.ui.reader.setting.ReadingMode
 import kotlinx.collections.immutable.ImmutableSet
 import tachiyomi.i18n.MR
+import tachiyomi.i18n.kmk.KMR
 import tachiyomi.i18n.sy.SYMR
 import tachiyomi.presentation.core.i18n.stringResource
 
@@ -48,6 +50,11 @@ fun ReaderBottomBar(
     onClickPageLayout: () -> Unit,
     onClickShiftPage: () -> Unit,
     // SY <--
+    // KMK: Continuous auto scroll -->
+    continuousAutoScroll: Boolean = false,
+    isContinuousScrollActive: Boolean = false,
+    onClickContinuousScroll: () -> Unit = {},
+    // KMK: Continuous auto scroll <--
     modifier: Modifier = Modifier,
 ) {
     // KMK -->
@@ -178,6 +185,22 @@ fun ReaderBottomBar(
                 )
             }
         }
+
+        // KMK: Continuous auto scroll button -->
+        // Pager 模式：自动翻页（按 interval 秒数定时翻页）
+        // Webtoon 模式：连续滚动（按 px/s 速度平滑滚动）
+        // 两种模式都用这个按钮，sheet 内部根据模式展示不同 UI
+        if (ReaderBottomButton.ContinuousScroll.isIn(enabledButtons) && continuousAutoScroll) {
+            IconButton(onClick = onClickContinuousScroll) {
+                Icon(
+                    imageVector = Icons.Outlined.PlayCircleOutline,
+                    contentDescription = stringResource(KMR.strings.pref_continuous_auto_scroll),
+                    // Active 状态时用 primary，未激活时用 onSurface
+                    tint = if (isContinuousScrollActive) iconColor else iconColor.copy(alpha = 0.5f),
+                )
+            }
+        }
+        // KMK: Continuous auto scroll button <--
 
         IconButton(onClick = onClickSettings) {
             Icon(
