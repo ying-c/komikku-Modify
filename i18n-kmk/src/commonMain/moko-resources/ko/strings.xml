@@ -150,7 +150,6 @@
     <string name="web_dav">WebDAV</string>
     <string name="pref_webdav_username">사용자 이름</string>
     <string name="pref_webdav_password">비밀번호</string>
-    <string name="sponsor_me">후원하기</string>
     <string name="pref_discord_show_buttons">버튼들 보이기</string>
     <string name="pref_discord_show_download_button">다운로드 단추 표시</string>
     <string name="updating">업데이트 중</string>

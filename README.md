@@ -173,16 +173,6 @@ See [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md).
 
 <div align="center">
 
-### Credits
-
-Thank you to all the people who have contributed!
-
-<a href="https://github.com/komikku-app/komikku/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=komikku-app/komikku" alt="Komikku app contributors" title="Komikku app contributors" width="800"/>
-</a>
-
-![Visitor Count](https://count.getloli.com/get/@komikku-app?theme=capoo-2)
-
 ### Disclaimer
 
 The developer(s) of this application does not have any affiliation with the content providers available, and this application hosts zero content.

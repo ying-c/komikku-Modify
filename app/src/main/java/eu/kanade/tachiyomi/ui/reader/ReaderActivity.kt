@@ -81,7 +81,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
 import com.google.android.material.transition.platform.MaterialContainerTransform
 import com.hippo.unifile.UniFile
@@ -141,6 +140,7 @@ import exh.util.mangaType
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
@@ -507,17 +507,6 @@ class ReaderActivity : BaseActivity() {
                     )
                 }
 
-                ReaderViewModel.Dialog.AutoScrollHelp -> AlertDialog(
-                    onDismissRequest = onDismissRequest,
-                    confirmButton = {
-                        TextButton(onClick = onDismissRequest) {
-                            Text(text = stringResource(MR.strings.action_ok))
-                        }
-                    },
-                    title = { Text(text = stringResource(SYMR.strings.eh_autoscroll_help)) },
-                    text = { Text(text = stringResource(SYMR.strings.eh_autoscroll_help_message)) },
-                )
-
                 ReaderViewModel.Dialog.BoostPageHelp -> AlertDialog(
                     onDismissRequest = onDismissRequest,
                     confirmButton = {
@@ -754,19 +743,21 @@ class ReaderActivity : BaseActivity() {
             // SY -->
             isExhToolsVisible = state.ehUtilsVisible,
             onSetExhUtilsVisibility = viewModel::showEhUtils,
-            isAutoScroll = state.autoScroll,
-            isAutoScrollEnabled = state.isAutoScrollEnabled,
-            onToggleAutoscroll = viewModel::toggleAutoScroll,
-            autoScrollFrequency = state.ehAutoscrollFreq,
-            onSetAutoScrollFrequency = viewModel::setAutoScrollFrequency,
             onClickRetryAll = ::exhRetryAll,
             onClickRetryAllHelp = viewModel::openRetryAllHelp,
             onClickBoostPage = ::exhBoostPage,
             onClickBoostPageHelp = viewModel::openBoostPageHelp,
             // KMK: Continuous auto scroll -->
-            isContinuousAutoScroll = readerPreferences.continuousAutoScroll().get(),
+            isContinuousAutoScroll = readerPreferences.continuousAutoScrollPager().get() || readerPreferences.continuousAutoScrollWebtoon().get(),
             onClickContinuousScroll = {
-                viewModel.toggleAutoScroll(!state.autoScroll)
+                if (!state.autoScroll) {
+                    viewModel.toggleAutoScroll(true)
+                    viewModel.setContinuousScrollSheetVisible(true)
+                } else if (state.continuousScrollSheetVisible) {
+                    viewModel.setContinuousScrollSheetVisible(false)
+                } else {
+                    viewModel.setContinuousScrollSheetVisible(true)
+                }
             },
             // KMK: Continuous auto scroll <--
             currentPageText = state.currentPageText,
@@ -791,9 +782,158 @@ class ReaderActivity : BaseActivity() {
             onClickShiftPage = ::shiftDoublePages,
             // SY <--
         )
+
+        // KMK: Continuous auto scroll sheet -->
+        // sheet 显示时隐藏顶栏/底栏/进度条，进入沉浸模式
+        if (state.continuousScrollSheetVisible) {
+            // KMK: 系统返回键关闭 sheet（先 sheet，再退到阅读页）
+            androidx.activity.compose.BackHandler(enabled = true) {
+                viewModel.setContinuousScrollSheetVisible(false)
+            }
+            // sheet 显示时隐藏顶栏/底栏/进度条，进入沉浸模式
+            androidx.compose.runtime.LaunchedEffect(Unit) {
+                viewModel.showMenus(false)
+            }
+            val isPagerMode = viewModel.state.value.viewer is PagerViewer
+            ContinuousScrollSheet(
+                isPagerMode = isPagerMode,
+                speed = if (isPagerMode) {
+                    readerPreferences.autoscrollInterval().get().toInt()
+                } else {
+                    readerPreferences.continuousScrollSpeed().get()
+                },
+                speedMin = if (isPagerMode) 1 else 10,
+                speedMax = if (isPagerMode) 30 else 500,
+                speedSuffix = if (isPagerMode) "s" else "px/s",
+                onSpeedChange = { newValue ->
+                    if (isPagerMode) {
+                        readerPreferences.autoscrollInterval().set(newValue.toFloat())
+                    } else {
+                        readerPreferences.continuousScrollSpeed().set(newValue)
+                    }
+                },
+                onExit = { viewModel.toggleAutoScroll(false) },
+                onClose = { viewModel.setContinuousScrollSheetVisible(false) },
+            )
+        }
+        // KMK: Continuous auto scroll sheet <--
     }
 
     // KMK -->
+    @Composable
+    private fun ContinuousScrollSheet(
+        isPagerMode: Boolean,
+        speed: Int,
+        speedMin: Int,
+        speedMax: Int,
+        speedSuffix: String,
+        onSpeedChange: (Int) -> Unit,
+        onExit: () -> Unit,
+        onClose: () -> Unit,
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            // 半透明遮罩 — 点击关闭 sheet，但不拦截 sheet 内部的 drag 手势
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(ComposeColor(0x80000000))
+                    .clickable { onClose() },
+            )
+            // 底部 sheet
+            Surface(
+                shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth(),
+            ) {
+                Column(modifier = Modifier.fillMaxWidth().clickable { /* consume click, prevent scrim close */ }) {
+                    // 顶部拉手
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .width(36.dp)
+                                .height(4.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)),
+                        )
+                    }
+                    // 标题
+                    Text(
+                        text = stringResource(if (isPagerMode) KMR.strings.continuous_auto_scroll_sheet_title_pager else KMR.strings.continuous_auto_scroll_sheet_title_webtoon),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    )
+                    // 速度 label
+                    var localSpeed by androidx.compose.runtime.remember {
+                        androidx.compose.runtime.mutableStateOf(speed)
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Text(
+                            text = if (isPagerMode) stringResource(KMR.strings.continuous_auto_scroll_speed_pager) else stringResource(KMR.strings.pref_continuous_scroll_speed),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                        Text(
+                            text = "$localSpeed $speedSuffix",
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                    // 速度滑块
+                    // Pager 模式: 只在松手时保存（避免拖动时触发翻页重启）
+                    // Webtoon 模式: 实时更新（热更新滚动速度）
+                    Slider(
+                        value = localSpeed.toFloat(),
+                        onValueChange = {
+                            localSpeed = it.toInt()
+                            if (!isPagerMode) onSpeedChange(it.toInt())
+                        },
+                        onValueChangeFinished = {
+                            if (isPagerMode) onSpeedChange(localSpeed)
+                        },
+                        valueRange = speedMin.toFloat()..speedMax.toFloat(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // 退出按钮
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                onExit()
+                                onClose()
+                            }
+                            .padding(vertical = 16.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = stringResource(KMR.strings.continuous_scroll_exit),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyLarge,
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+            }
+        }
+    }
 
     @Composable
     private fun seedColorState(): ComposeColor? {
@@ -830,41 +970,53 @@ class ReaderActivity : BaseActivity() {
                 interval.toDouble() to enabled
             }.mapLatest { (intervalFloat, enabled) ->
                 if (enabled) {
-                    repeatOnLifecycle(Lifecycle.State.STARTED) {
-                        val interval = intervalFloat.seconds
-                        while (true) {
-                            if (!viewModel.state.value.menuVisible) {
-                                viewModel.state.value.viewer.let { v ->
-                                    when (v) {
-                                        is PagerViewer -> v.moveToNext()
-                                        is WebtoonViewer -> {
-                                            if (readerPreferences.continuousAutoScroll().get()) {
-                                                // KMK: True continuous smooth scroll (r10)
-                                                val speed = readerPreferences.continuousScrollSpeed().get().toFloat()
-                                                v.startContinuousScroll(speed)
-                                                while (v.isContinuousScrolling() &&
-                                                    viewModel.state.value.autoScroll &&
-                                                    !viewModel.state.value.menuVisible
-                                                ) {
-                                                    delay(100)
+                    // KMK: coroutineScope 让 while(true) 绑定到 mapLatest 取消域
+                    // repeatOnLifecycle 内部协程不受 mapLatest 控制 → 多协程堆积 → 卡死
+                    kotlinx.coroutines.coroutineScope {
+                        launch(Dispatchers.Main) {
+                            val interval = intervalFloat.seconds
+                            while (isActive) {
+                                // Stop if preference was disabled while running
+                                val isPager = viewModel.state.value.viewer is PagerViewer
+                                val prefEnabled = if (isPager) readerPreferences.continuousAutoScrollPager().get() else readerPreferences.continuousAutoScrollWebtoon().get()
+                                if (!prefEnabled) {
+                                    viewModel.toggleAutoScroll(false)
+                                    break
+                                }
+                                if (!viewModel.state.value.menuVisible) {
+                                    viewModel.state.value.viewer.let { v ->
+                                        when (v) {
+                                            is PagerViewer -> v.moveToNext()
+                                            is WebtoonViewer -> {
+                                                if (readerPreferences.continuousAutoScrollWebtoon().get()) {
+                                                    val speed = readerPreferences.continuousScrollSpeed().get().toFloat()
+                                                    v.startContinuousScroll(speed)
+                                                    while (v.isContinuousScrolling() &&
+                                                        viewModel.state.value.autoScroll &&
+                                                        !viewModel.state.value.menuVisible
+                                                    ) {
+                                                        delay(100)
+                                                    }
+                                                    v.stopContinuousScroll()
+                                                } else if (readerPreferences.smoothAutoScroll().get()) {
+                                                    v.linearScroll(interval)
+                                                } else {
+                                                    v.scrollDown()
                                                 }
-                                                v.stopContinuousScroll()
-                                            } else if (readerPreferences.smoothAutoScroll().get()) {
-                                                v.linearScroll(interval)
-                                            } else {
-                                                v.scrollDown()
                                             }
                                         }
                                     }
+                                    // Pager 模式始终 delay(interval)，Webtoon 连续滚动靠自己的 Choreographer
+                                    val isPager = viewModel.state.value.viewer is PagerViewer
+                                    if (isPager || !readerPreferences.continuousAutoScrollWebtoon().get()) {
+                                        delay(interval)
+                                    }
+                                } else {
+                                    viewModel.state.value.viewer.let { v ->
+                                        if (v is WebtoonViewer) v.stopContinuousScroll()
+                                    }
+                                    delay(100)
                                 }
-                                if (!readerPreferences.continuousAutoScroll().get()) {
-                                    delay(interval)
-                                }
-                            } else {
-                                viewModel.state.value.viewer.let { v ->
-                                    if (v is WebtoonViewer) v.stopContinuousScroll()
-                                }
-                                delay(100)
                             }
                         }
                     }

@@ -149,7 +149,6 @@
     <string name="job_failed_schedule_update_check">Gagal menjadwalkan pembaruan perpustakaan otomatis: %s</string>
     <string name="job_failed_schedule_backup_check">Gagal menjadwalkan pencadangan otomatis: %s</string>
     <string name="label_to_be_updated">Untuk diperbarui</string>
-    <string name="sponsor_me">Dukung Saya</string>
     <string name="special_services">Layanan Khusus</string>
     <string name="pref_category_connections">Koneksi</string>
     <string name="pref_connections_summary">Discord, lebih banyak lagi yang akan datang...</string>

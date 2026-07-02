@@ -204,6 +204,28 @@ private fun PagerViewerSettings(screenModel: ReaderSettingsScreenModel) {
         }
     }
     // SY <--
+
+    // KMK: Continuous auto scroll for Pager mode -->
+    CheckboxItem(
+        label = stringResource(KMR.strings.continuous_auto_scroll_label_pager),
+        pref = screenModel.preferences.continuousAutoScrollPager(),
+    )
+
+    val continuousAutoScroll by screenModel.preferences.continuousAutoScrollPager().collectAsState()
+    if (continuousAutoScroll) {
+        val autoscrollInterval by screenModel.preferences.autoscrollInterval().collectAsState()
+        SliderItem(
+            value = autoscrollInterval.toInt(),
+            valueRange = 1..30,
+            label = stringResource(KMR.strings.continuous_auto_scroll_speed_pager),
+            valueString = "$autoscrollInterval s",
+            onChange = {
+                screenModel.preferences.autoscrollInterval().set(it.toFloat())
+            },
+            pillColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+        )
+    }
+    // KMK: Continuous auto scroll for Pager mode <--
 }
 
 @Composable
@@ -275,16 +297,16 @@ private fun WebtoonViewerSettings(
 
     // KMK: Continuous auto scroll -->
     CheckboxItem(
-        label = stringResource(KMR.strings.pref_continuous_auto_scroll),
-        pref = screenModel.preferences.continuousAutoScroll(),
+        label = stringResource(KMR.strings.continuous_auto_scroll_label_webtoon),
+        pref = screenModel.preferences.continuousAutoScrollWebtoon(),
     )
 
-    val continuousAutoScroll by screenModel.preferences.continuousAutoScroll().collectAsState()
+    val continuousAutoScroll by screenModel.preferences.continuousAutoScrollWebtoon().collectAsState()
     if (continuousAutoScroll) {
         val continuousScrollSpeed by screenModel.preferences.continuousScrollSpeed().collectAsState()
         SliderItem(
             value = continuousScrollSpeed,
-            valueRange = 10..200,
+            valueRange = 10..500,
             label = stringResource(KMR.strings.pref_continuous_scroll_speed),
             valueString = "$continuousScrollSpeed px/s",
             onChange = {

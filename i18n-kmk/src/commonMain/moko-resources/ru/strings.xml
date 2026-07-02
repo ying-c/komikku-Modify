@@ -136,7 +136,6 @@
     <string name="downloaded_data">Загруженные данные</string>
     <string name="chapters_from_database">Главы и история из базы данных</string>
     <string name="action_manual_install">Ручная установка</string>
-    <string name="sponsor_me">Поддержите меня</string>
     <string name="pref_show_empty_categories_search">Показывать пустые категории при поиске/фильтрации</string>
     <string name="pref_pinch_to_zoom">Приближение разведением двумя пальцами</string>
     <string name="pref_paged_disable_zoom_in">Отключить приближение</string>

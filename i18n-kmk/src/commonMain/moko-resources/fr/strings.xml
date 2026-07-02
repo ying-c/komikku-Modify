@@ -149,7 +149,6 @@
     <string name="chapters_from_database">Chapitres et historique issus de la base de données</string>
     <string name="job_failed_schedule_update_check">Échec de la planification de la mise à jour automatique de la bibliothèque : %s</string>
     <string name="job_failed_schedule_backup_check">Échec de la planification de la sauvegarde automatique : %s</string>
-    <string name="sponsor_me">Soutenez-moi</string>
     <string name="special_services">Services spéciaux</string>
     <string name="pref_category_connections">Connexions</string>
     <string name="pref_connections_summary">Discord, plus à venir...</string>

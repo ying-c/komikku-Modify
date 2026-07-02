@@ -79,11 +79,6 @@ fun ReaderAppBars(
     // SY -->
     isExhToolsVisible: Boolean,
     onSetExhUtilsVisibility: (Boolean) -> Unit,
-    isAutoScroll: Boolean,
-    isAutoScrollEnabled: Boolean,
-    onToggleAutoscroll: (Boolean) -> Unit,
-    autoScrollFrequency: String,
-    onSetAutoScrollFrequency: (String) -> Unit,
     onClickRetryAll: () -> Unit,
     onClickRetryAllHelp: () -> Unit,
     onClickBoostPage: () -> Unit,
@@ -139,18 +134,10 @@ fun ReaderAppBars(
                     isVisible = isExhToolsVisible,
                     onSetExhUtilsVisibility = onSetExhUtilsVisibility,
                     backgroundColor = backgroundColor,
-                    isAutoScroll = isAutoScroll,
-                    isAutoScrollEnabled = isAutoScrollEnabled,
-                    onToggleAutoscroll = onToggleAutoscroll,
-                    autoScrollFrequency = autoScrollFrequency,
-                    onSetAutoScrollFrequency = onSetAutoScrollFrequency,
                     onClickRetryAll = onClickRetryAll,
                     onClickRetryAllHelp = onClickRetryAllHelp,
                     onClickBoostPage = onClickBoostPage,
                     onClickBoostPageHelp = onClickBoostPageHelp,
-                    // KMK: Continuous auto scroll -->
-                    isContinuousAutoScroll = isContinuousAutoScroll,
-                    // KMK: Continuous auto scroll <--
                 )
             }
             // SY <--

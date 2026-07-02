@@ -134,7 +134,6 @@
     <string name="chapters_from_database">Розділи і Історія з бази даних</string>
     <string name="action_manual_install">Ручне встановлення</string>
     <string name="label_library_update_errors">Помилки оновлення бібліотеки (%d)</string>
-    <string name="sponsor_me">Підтримати мене</string>
     <string name="custom_theme_palette_outrun">Аутран</string>
     <string name="custom_theme_palette_springfield">Springfield</string>
     <string name="connections_discord_info">Цей сервіс Discord працює через систему з використанням жетонів. Використовуйте на ваш власний ризик. Ваш токен зберігається на локальному і Anikku не поширює його ніде інше</string>

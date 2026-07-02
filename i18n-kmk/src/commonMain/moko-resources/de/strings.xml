@@ -136,7 +136,6 @@
     <string name="pref_track_on_add_library">Öffne das Tracking-Menü beim Hinzufügen zur Bibliothek</string>
     <string name="downloaded_data">Heruntergeladene Daten</string>
     <string name="chapters_from_database">Kapitel &amp; Verlauf aus der Datenbank</string>
-    <string name="sponsor_me">Unterstütze mich</string>
     <string name="pref_pinch_to_zoom">Mit Zwei-Finger-Geste zoomen</string>
     <string name="pref_paged_disable_zoom_in">Hineinzoomen deaktivieren</string>
     <string name="pref_landscape_zoom_type">Zoommodus für breite Bilder</string>

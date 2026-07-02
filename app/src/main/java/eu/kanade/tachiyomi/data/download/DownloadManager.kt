@@ -363,7 +363,7 @@ class DownloadManager(
                 logcat(LogPriority.ERROR, e) { "Manga download folder doesn't exist." }
                 return cleaned
             }
-            if (!mangaFolder.listFiles().isNullOrEmpty()) {
+            if (mangaFolder.listFiles().isNullOrEmpty()) {
                 mangaFolder.delete()
                 cache.removeManga(manga)
             } else {

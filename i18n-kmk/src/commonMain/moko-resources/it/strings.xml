@@ -162,7 +162,6 @@
     <string name="pref_webdav_url_summ">Inserisci l\'indirizzo server di WebDAV</string>
     <string name="downloaded_data">Dati scaricati</string>
     <string name="migrationConfigScreen_smartSearchSingleEntryTitle">Usa ricerca intelligente</string>
-    <string name="sponsor_me">Sponsorizzami</string>
     <string name="connections_discord">Discord</string>
     <string name="pref_discord_status">Stato di Discord</string>
     <string name="show_chapters_titles_title">Mostra Titoli Capitolo</string>

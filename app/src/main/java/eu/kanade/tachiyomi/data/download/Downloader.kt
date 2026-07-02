@@ -445,7 +445,7 @@ class Downloader(
             }
             cache.addChapter(chapterDirname, mangaDir, download.manga)
 
-            DiskUtil.createNoMediaFile(tmpDir, context)
+            DiskUtil.createNoMediaFile(mangaDir, context)
 
             download.status = Download.State.DOWNLOADED
         } catch (error: Throwable) {

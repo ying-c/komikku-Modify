@@ -33,21 +33,10 @@ fun ExhUtils(
     isVisible: Boolean,
     onSetExhUtilsVisibility: (Boolean) -> Unit,
     backgroundColor: Color,
-    // KMK: 老的 eh_autoscroll (自动翻页) 已废弃，由 continuousAutoScroll (连续自动滚动) 替代
-    isAutoScroll: Boolean = false,
-    isAutoScrollEnabled: Boolean = false,
-    onToggleAutoscroll: (Boolean) -> Unit = {},
-    autoScrollFrequency: String = "",
-    onSetAutoScrollFrequency: (String) -> Unit = {},
     onClickRetryAll: () -> Unit,
     onClickRetryAllHelp: () -> Unit,
     onClickBoostPage: () -> Unit,
     onClickBoostPageHelp: () -> Unit,
-    // KMK: Continuous auto scroll -->
-    isContinuousAutoScroll: Boolean = false,
-    continuousScrollSpeed: Int = 50,
-    onContinuousScrollSpeedChange: (Int) -> Unit = {},
-    // KMK: Continuous auto scroll <--
     modifier: Modifier = Modifier,
 ) {
     Column(

@@ -136,7 +136,6 @@
     <string name="pref_track_on_add_library">Mở menu theo dõi khi thêm vào thư viện</string>
     <string name="downloaded_data">Dữ liệu đã tải xuống</string>
     <string name="chapters_from_database">Chương &amp; Lịch sử từ cơ sở dữ liệu</string>
-    <string name="sponsor_me">Tài trợ cho tôi</string>
     <string name="pref_pinch_to_zoom">Kéo để phóng to</string>
     <string name="pref_category_connections">Kết nối</string>
     <string name="connections_discord">Discord</string>

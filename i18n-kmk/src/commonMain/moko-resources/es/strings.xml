@@ -139,7 +139,6 @@
     <string name="pref_webdav_password">Contraseña</string>
     <string name="action_manual_install">Instalación manual</string>
     <string name="web_dav">WebDAV</string>
-    <string name="sponsor_me">Patrociname</string>
     <string name="discord_download_button">Sigue leyendo en %s</string>
     <string name="discord_status_using">Utilización</string>
     <string name="discord_status_description">%1$s %2$s</string>

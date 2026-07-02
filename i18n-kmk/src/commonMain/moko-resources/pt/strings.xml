@@ -149,7 +149,6 @@
     <string name="custom_theme_palette_springfield">Campo de primavera</string>
     <string name="job_failed_schedule_update_check">Falha ao agendar atualização automática da biblioteca: %s</string>
     <string name="job_failed_schedule_backup_check">Falha ao agendar backup automático: %s</string>
-    <string name="sponsor_me">Apoie-me</string>
     <string name="special_services">Serviços Especiais</string>
     <string name="pref_category_connections">Conexões</string>
     <string name="pref_connections_summary">Discord, mais novidades em breve...</string>

@@ -184,7 +184,8 @@ class ReaderPreferences(
 
     fun smoothAutoScroll() = preferenceStore.getBoolean("smooth_auto_scroll", true)
 
-    fun continuousAutoScroll() = preferenceStore.getBoolean("continuous_auto_scroll", false)
+    fun continuousAutoScrollPager() = preferenceStore.getBoolean("continuous_auto_scroll_pager", false)
+    fun continuousAutoScrollWebtoon() = preferenceStore.getBoolean("continuous_auto_scroll_webtoon", false)
 
     fun continuousScrollSpeed() = preferenceStore.getInt("continuous_scroll_speed", 50) // px/sec
 

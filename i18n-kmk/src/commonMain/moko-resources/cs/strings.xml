@@ -161,7 +161,6 @@
     <string name="pref_webdav_username">Uživatelské jméno</string>
     <string name="pref_webdav_password">Heslo</string>
     <string name="action_manual_install">Ruční instalace</string>
-    <string name="sponsor_me">Podpoř mě</string>
     <string name="scale_type_16_9">16:9</string>
     <string name="pref_track_on_add_library">Otevřít nabídku stopování při přidávání do knihovny</string>
     <string name="action_open_folder">Otevřít složku</string>

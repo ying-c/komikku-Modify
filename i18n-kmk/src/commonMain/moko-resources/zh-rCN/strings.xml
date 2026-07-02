@@ -126,7 +126,6 @@
     <string name="action_open_folder">打开文件夹</string>
     <string name="error_opening_folder">打开文件夹时出错</string>
     <string name="action_manual_install">手动安装</string>
-    <string name="sponsor_me">赞助</string>
     <string name="pref_viewer_nav_smaller_tap_zone">缩减点按区域</string>
     <string name="action_update">更新</string>
     <string name="pref_webdav_username">用户名</string>
@@ -178,8 +177,17 @@
     <string name="discord_accounts">Discord 账户</string>
     <string name="active_account">活动账户</string>
     <!-- Continuous Auto Scroll -->
-    <string name="pref_continuous_auto_scroll">连续自动滚动</string>
+    <string name="pref_continuous_auto_scroll">连续自动阅读</string>
     <string name="pref_continuous_auto_scroll_summary">页面内容持续平滑向上移动，像视频播放一样</string>
     <string name="pref_continuous_scroll_speed">滚动速度</string>
     <string name="pref_continuous_scroll_speed_slow">慢</string>
-    <string name="pref_continuous_scroll_speed_fast">快</string></resources>
+    <string name="pref_continuous_scroll_speed_fast">快</string>
+    <string name="continuous_scroll_exit">退出自动阅读</string>
+    <string name="continuous_auto_scroll_pager_suffix">（翻页）</string>
+    <string name="continuous_auto_scroll_webtoon_suffix">（滚动）</string>
+    <string name="continuous_auto_scroll_speed_pager">翻页速度</string>
+    <string name="continuous_auto_scroll_label_pager">连续自动阅读（翻页）</string>
+    <string name="continuous_auto_scroll_label_webtoon">连续自动阅读（滚动）</string>
+    <string name="continuous_auto_scroll_sheet_title_pager">连续自动阅读（翻页）</string>
+    <string name="continuous_auto_scroll_sheet_title_webtoon">连续自动阅读（滚动）</string>
+</resources>

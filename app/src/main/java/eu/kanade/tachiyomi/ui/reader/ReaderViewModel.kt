@@ -249,7 +249,7 @@ class ReaderViewModel @JvmOverloads constructor(
     private var chapterToDownload: Download? = null
 
     private val unfilteredChapterList by lazy {
-        val manga = manga!!
+        val manga = manga ?: error("manga not initialized")
         runBlocking {
             // KMK -->
             if (manga.source == MERGED_SOURCE_ID) {
@@ -266,7 +266,7 @@ class ReaderViewModel @JvmOverloads constructor(
      * time in a background thread to avoid blocking the UI.
      */
     private val chapterList by lazy {
-        val manga = manga!!
+        val manga = manga ?: error("manga not initialized")
         // SY -->
         val (chapters, mangaMap) = runBlocking {
             if (manga.source == MERGED_SOURCE_ID) {
@@ -367,23 +367,7 @@ class ReaderViewModel @JvmOverloads constructor(
             }
             .launchIn(viewModelScope)
 
-        // SY -->
-        state.mapLatest { it.ehAutoscrollFreq }
-            .distinctUntilChanged()
-            .drop(1)
-            .onEach { text ->
-                val parsed = text.toDoubleOrNull()
-
-                if (parsed == null || parsed <= 0 || parsed > 9999) {
-                    readerPreferences.autoscrollInterval().set(-1f)
-                    mutableState.update { it.copy(isAutoScrollEnabled = false) }
-                } else {
-                    readerPreferences.autoscrollInterval().set(parsed.toFloat())
-                    mutableState.update { it.copy(isAutoScrollEnabled = true) }
-                }
-            }
-            .launchIn(viewModelScope)
-        // SY <--
+        // KMK: continuousAutoScroll 热更新已在 enableExhAutoScroll() 中处理
     }
 
     override fun onCleared() {
@@ -445,7 +429,6 @@ class ReaderViewModel @JvmOverloads constructor(
                         null
                     }
                     val relativeTime = uiPreferences.relativeTime().get()
-                    val autoScrollFreq = readerPreferences.autoscrollInterval().get()
                     // SY <--
                     mutableState.update {
                         it.copy(
@@ -454,12 +437,6 @@ class ReaderViewModel @JvmOverloads constructor(
                             meta = metadata,
                             mergedManga = mergedManga,
                             dateRelativeTime = relativeTime,
-                            ehAutoscrollFreq = if (autoScrollFreq == -1f) {
-                                ""
-                            } else {
-                                autoScrollFreq.toString()
-                            },
-                            isAutoScrollEnabled = autoScrollFreq != -1f,
                             // SY <--
                         )
                     }
@@ -1022,7 +999,7 @@ class ReaderViewModel @JvmOverloads constructor(
      */
     fun setMangaReadingMode(readingMode: ReadingMode) {
         val manga = manga ?: return
-        runBlocking(Dispatchers.IO) {
+        viewModelScope.launchIO {
             setMangaViewerFlags.awaitSetReadingMode(manga.id, readingMode.flagValue.toLong())
             val currChapters = state.value.viewerChapters
             if (currChapters != null) {
@@ -1117,6 +1094,10 @@ class ReaderViewModel @JvmOverloads constructor(
         mutableState.update { it.copy(ehUtilsVisible = visible) }
     }
 
+    fun setContinuousScrollSheetVisible(visible: Boolean) {
+        mutableState.update { it.copy(continuousScrollSheetVisible = visible) }
+    }
+
     fun setIndexChapterToShift(index: Long?) {
         mutableState.update { it.copy(indexChapterToShift = index) }
     }
@@ -1133,10 +1114,6 @@ class ReaderViewModel @JvmOverloads constructor(
         mutableState.update { it.copy(doublePages = doublePages) }
     }
 
-    fun openAutoScrollHelpDialog() {
-        mutableState.update { it.copy(dialog = Dialog.AutoScrollHelp) }
-    }
-
     fun openBoostPageHelp() {
         mutableState.update { it.copy(dialog = Dialog.BoostPageHelp) }
     }
@@ -1147,10 +1124,6 @@ class ReaderViewModel @JvmOverloads constructor(
 
     fun toggleAutoScroll(enabled: Boolean) {
         mutableState.update { it.copy(autoScroll = enabled) }
-    }
-
-    fun setAutoScrollFrequency(frequency: String) {
-        mutableState.update { it.copy(ehAutoscrollFreq = frequency) }
     }
     // SY <--
 
@@ -1278,8 +1251,10 @@ class ReaderViewModel @JvmOverloads constructor(
         ImageUtil.findImageType(stream1) ?: throw Exception("Not an image")
         val stream2 = page2.stream!!
         ImageUtil.findImageType(stream2) ?: throw Exception("Not an image")
-        val imageBitmap = ImageDecoder.newInstance(stream1())?.decode()!!
-        val imageBitmap2 = ImageDecoder.newInstance(stream2())?.decode()!!
+        val imageBitmap = ImageDecoder.newInstance(stream1())?.decode()
+            ?: throw Exception("Failed to decode first image")
+        val imageBitmap2 = ImageDecoder.newInstance(stream2())?.decode()
+            ?: throw Exception("Failed to decode second image")
 
         val chapter = page1.chapter.chapter
 
@@ -1328,8 +1303,8 @@ class ReaderViewModel @JvmOverloads constructor(
 
         val filename = generateFilename(manga, page)
 
-        try {
-            viewModelScope.launchNonCancellable {
+        viewModelScope.launchNonCancellable {
+            try {
                 destDir.deleteRecursively()
                 val uri = imageSaver.save(
                     image = Image.Page(
@@ -1339,9 +1314,9 @@ class ReaderViewModel @JvmOverloads constructor(
                     ),
                 )
                 eventChannel.send(if (copyToClipboard) Event.CopyImage(uri) else Event.ShareImage(uri, page))
+            } catch (e: Throwable) {
+                logcat(LogPriority.ERROR, e)
             }
-        } catch (e: Throwable) {
-            logcat(LogPriority.ERROR, e)
         }
     }
 
@@ -1359,8 +1334,8 @@ class ReaderViewModel @JvmOverloads constructor(
         val context = Injekt.get<Application>()
         val destDir = context.cacheImageDir
 
-        try {
-            viewModelScope.launchNonCancellable {
+        viewModelScope.launchNonCancellable {
+            try {
                 destDir.deleteRecursively()
                 val uri = saveImages(
                     page1 = firstPage,
@@ -1371,9 +1346,9 @@ class ReaderViewModel @JvmOverloads constructor(
                     manga = manga,
                 )
                 eventChannel.send(if (copyToClipboard) Event.CopyImage(uri) else Event.ShareImage(uri, firstPage, secondPage))
+            } catch (e: Throwable) {
+                logcat(LogPriority.ERROR, e)
             }
-        } catch (e: Throwable) {
-            logcat(LogPriority.ERROR, e)
         }
     }
     // SY <--
@@ -1494,9 +1469,9 @@ class ReaderViewModel @JvmOverloads constructor(
         val doublePages: Boolean = false,
         val dateRelativeTime: Boolean = true,
         val autoScroll: Boolean = false,
-        val isAutoScrollEnabled: Boolean = false,
-        val ehAutoscrollFreq: String = "",
-        // SY <--
+        // SY <--> KMK -->
+        val continuousScrollSheetVisible: Boolean = false,
+        // KMK <--
     ) {
         val currentChapter: ReaderChapter?
             get() = viewerChapters?.currChapter
@@ -1523,7 +1498,6 @@ class ReaderViewModel @JvmOverloads constructor(
         ) : Dialog
 
         // SY -->
-        data object AutoScrollHelp : Dialog
         data object RetryAllHelp : Dialog
         data object BoostPageHelp : Dialog
         // SY <--
