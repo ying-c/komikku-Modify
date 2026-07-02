@@ -3,31 +3,24 @@
 <a href="https://komikku-app.github.io">
   <img width=200px height=200px src="./.github/readme-images/app-icon.png"/>
 </a><br/>
-<a href="https://trendshift.io/repositories/13696" target="_blank"><img src="https://trendshift.io/api/badge/repositories/13696" alt="komikku-app%2Fkomikku | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
- <h1 align="center"> Komikku </h1>
+ <h1 align="center"> Komikku-Modify </h1>
 
-| Releases | Preview |
-|----------|---------|
-| <div align="center"> [![GitHub downloads](https://img.shields.io/github/downloads/komikku-app/komikku/latest/total?label=Latest%20Downloads&labelColor=27303D&color=0D1117&logo=github&logoColor=FFFFFF&style=flat)](https://github.com/komikku-app/komikku/releases/latest) [![GitHub downloads](https://img.shields.io/github/downloads/komikku-app/komikku/total?label=Total%20Downloads&labelColor=27303D&color=0D1117&logo=github&logoColor=FFFFFF&style=flat)](https://github.com/komikku-app/komikku/releases) [![Stable build](https://img.shields.io/github/actions/workflow/status/komikku-app/komikku/build_release.yml?labelColor=27303D&label=Stable&labelColor=06599d&color=043b69)](https://github.com/komikku-app/komikku/actions/workflows/build_release.yml) | <div align="center"> [![GitHub downloads](https://img.shields.io/github/downloads/komikku-app/komikku-preview/latest/total?label=Latest%20Downloads&labelColor=27303D&color=0D1117&logo=github&logoColor=FFFFFF&style=flat)](https://github.com/komikku-app/komikku-preview/releases/latest) [![GitHub downloads](https://img.shields.io/github/downloads/komikku-app/komikku-preview/total?label=Total%20Downloads&labelColor=27303D&color=0D1117&logo=github&logoColor=FFFFFF&style=flat)](https://github.com/komikku-app/komikku-preview/releases) [![Preview build](https://img.shields.io/github/actions/workflow/status/komikku-app/komikku-preview/build_app.yml?labelColor=27303D&label=Preview&labelColor=2c2c47&color=1c1c39)](https://github.com/komikku-app/komikku-preview/actions/workflows/build_app.yml) |
+| Releases |
+|----------|
+| <div align="center"> [![GitHub downloads](https://img.shields.io/github/downloads/ying-c/komikku-Modify/latest/total?label=Latest%20Downloads&labelColor=27303D&color=0D1117&logo=github&logoColor=FFFFFF&style=flat)](https://github.com/ying-c/komikku-Modify/releases/latest) [![GitHub downloads](https://img.shields.io/github/downloads/ying-c/komikku-Modify/total?label=Total%20Downloads&labelColor=27303D&color=0D1117&logo=github&logoColor=FFFFFF&style=flat)](https://github.com/ying-c/komikku-Modify/releases) |
 
 *Requires Android 8.0 or higher.*
 
-[![Discord](https://img.shields.io/discord/1242381704459452488.svg?label=&labelColor=6A7EC2&color=7389D8&logo=discord&logoColor=FFFFFF)](https://discord.gg/85jB7V5AJR)
-[![CI](https://img.shields.io/github/actions/workflow/status/komikku-app/komikku/build_push.yml?labelColor=27303D&label=CI)](https://github.com/komikku-app/komikku/actions/workflows/build_push.yml)
-[![License: Apache-2.0](https://img.shields.io/github/license/komikku-app/komikku?labelColor=27303D&color=0877d2)](/LICENSE)
-[![Translation status](https://img.shields.io/weblate/progress/komikku-app?labelColor=27303D&color=946300)](https://hosted.weblate.org/engage/komikku-app/)
+[![License: Apache-2.0](https://img.shields.io/github/license/ying-c/komikku-Modify?labelColor=27303D&color=0877d2)](/LICENSE)
 
 ## Download
 
-[![Stable](https://img.shields.io/github/release/komikku-app/komikku.svg?maxAge=3600&label=Stable&labelColor=06599d&color=043b69)](https://github.com/komikku-app/komikku/releases/latest)
-[![Preview](https://img.shields.io/github/v/release/komikku-app/komikku-preview.svg?maxAge=3600&label=Preview&labelColor=2c2c47&color=1c1c39)](https://github.com/komikku-app/komikku-preview/releases/latest)
+[![Stable](https://img.shields.io/github/release/ying-c/komikku-Modify.svg?maxAge=3600&label=Stable&labelColor=06599d&color=043b69)](https://github.com/ying-c/komikku-Modify/releases/latest)
 
 *Requires Android 8.0 or higher.*
 
-[![Sponsor me on GitHub](https://custom-icon-badges.demolab.com/badge/-Sponsor-ea4aaa?style=for-the-badge&logo=heart&logoColor=white)](https://github.com/sponsors/cuong-tran "Sponsor me on GitHub")
-
 <div align="left">
-A free and open source manga reader which is based off TachiyomiSY & Mihon/Tachiyomi. This fork is meant to provide new & useful features while regularly take features/updates from Mihon or other forks like SY, J2K and Neko...
+A modified fork of Komikku (based on TachiyomiSY & Mihon/Tachiyomi) with additional bug fixes, performance improvements, and UI enhancements.
 
 ![screenshots of app](./.github/readme-images/screens.png)
 
@@ -35,13 +28,40 @@ A free and open source manga reader which is based off TachiyomiSY & Mihon/Tachi
 
 ## Features
 
-### Komikku's unique features:
+### Modifications in this fork:
+
+#### r28
+- Removed `CONTRIBUTING.md` and Credits section from README.
+
+#### r27
+- **ANR fix**: `setMangaReadingMode()` no longer blocks the UI thread — changed from `runBlocking(Dispatchers.IO)` to `viewModelScope.launchIO`.
+- **Dead code cleanup**: Removed ~50 lines of old auto-scroll system remnants (`ehAutoscrollFreq`, `isAutoScrollEnabled`, `setAutoScrollFrequency()`, `openAutoScrollHelpDialog()`, `Dialog.AutoScrollHelp`, `continuousAutoScroll()` preference).
+
+#### r26
+- Removed Sponsor button from More screen.
+- Cleaned up `Constants.SPONSOR` and `sponsor_me` i18n strings across 20+ translation files.
+
+#### r25
+- Dead code cleanup: Removed unused parameters from `ExhUtils`, `ReaderActivity`, and `ReaderAppBars`.
+
+#### Continuous Auto-Scroll (from Komikku upstream)
+- **Pager mode**: Continuous auto page-turn with configurable interval (1–30 seconds).
+- **Webtoon mode**: Continuous auto-scroll with configurable speed (px/s).
+- Independent preferences per mode (`continuousAutoScrollPager` / `continuousAutoScrollWebtoon`).
+- ▶️ button in reader bottom bar to toggle auto-scroll on/off.
+- Speed/interval adjustable via SliderItem in Reading Mode settings.
+- `enableExhAutoScroll()` monitors preference changes and stops when disabled.
+
+<details>
+  <summary>Features from Komikku (upstream)</summary>
+
+#### Komikku's unique features:
 - `Suggestions` automatically showing source-website's recommendations / suggestions / related to current entry for all sources.
 - `Hidden categories` to hide yours things from *nosy* people.
 - `Auto theme color` based on each entry's cover for entry View & Reader.
 - `App custom theme` with `Color palettes` for endless color lover.
 - `Bulk-favorite` multiple entries all at once.
-- Source & Language icon on Library & various places. (Some language flags are not really accurate)
+- Source & Language icon on Library & various places.
 - `Feed` now supports **all** sources, with more items (20 for now).
 - Fast browsing (for who with large library experiencing slow loading)
 - Grouped entries in Update tab (inspired by J2K).
@@ -65,6 +85,7 @@ A free and open source manga reader which is based off TachiyomiSY & Mihon/Tachi
 - Always up-to-date with Mihon & SY
 - More app themes & better UI, improvements...
 
+</details>
 
 <details>
   <summary>Features from Mihon / Tachiyomi</summary>
@@ -89,15 +110,15 @@ A free and open source manga reader which is based off TachiyomiSY & Mihon/Tachi
 #### All features from TachiyomiSY:
 * Feed tab, where you can easily view the latest entries or saved search from multiple sources at same time.
 * Automatic webtoon detection, allowing the reader to switch to webtoon mode automatically when viewing one
-* Manga recommendations, uses MAL and Anilist, as well as Neko Similar Manga for Mangadex manga (Thanks to Az, She11Shocked, Carlos, and Goldbattle)
+* Manga recommendations, uses MAL and Anilist, as well as Neko Similar Manga for Mangadex manga
 * Lewd filter, hide the lewd manga in your library when you want to
-* Tracking filter, filter your tracked manga so you can see them or see non-tracked manga, made by She11Shocked
-* Search tracking status in library, made by She11Shocked
-* Custom categories for sources, liked the pinned sources, but you can make your own versions and put any sources in them
+* Tracking filter, filter your tracked manga so you can see them or see non-tracked manga
+* Search tracking status in library
+* Custom categories for sources
 * Manga info edit
 * Manga Cover view + share and save
 * Dynamic Categories, view the library in multiple ways
-* Smart background for reading modes like LTR or Vertical, changes the background based on the page color
+* Smart background for reading modes like LTR or Vertical
 * Force disable webtoon zoom
 * Hentai features enable/disable, in advanced settings
 * Quick clean titles
@@ -111,15 +132,15 @@ A free and open source manga reader which is based off TachiyomiSY & Mihon/Tachi
 * Click tag for local search, long click tag for global search
 * Merge multiple of the same manga from different sources
 * Drag and drop library sorting
-* Library search engine, includes exclude, quotes as absolute, and a bunch of other ways to search
-* New E-Hentai/ExHentai features, such as language settings and watched list settings
+* Library search engine
+* New E-Hentai/ExHentai features
 * Enhanced views for internal and integrated sources
 * Enhanced usability for internal and delegated sources
 
 Custom sources:
 * E-Hentai/ExHentai
 
-Additional features for some extensions, features include custom description, opening in app, batch add to library, and a bunch of other things based on the source:
+Additional features for some extensions:
 * 8Muses (EroMuse)
 * Mangadex
 * NHentai
@@ -128,16 +149,14 @@ Additional features for some extensions, features include custom description, op
 
 </details>
 
-## Issues, Feature Requests and Contributing
+## Issues and Feature Requests
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 <details><summary>Issues</summary>
 
-[Website](https://komikku-app.github.io/)
-
-1. **Before reporting a new issue, take a look at the [FAQ](https://komikku-app.github.io/docs/faq/general), the [changelog](https://github.com/komikku-app/komikku/releases) and the already opened [issues](https://github.com/komikku-app/komikku/issues).**
-2. If you are unsure, ask here: [![Discord](https://img.shields.io/discord/1242381704459452488.svg?label=&labelColor=6A7EC2&color=7389D8&logo=discord&logoColor=FFFFFF)](https://discord.gg/85jB7V5AJR)
+1. **Before reporting a new issue, take a look at the [FAQ](https://komikku-app.github.io/docs/faq/general), the [changelog](https://github.com/ying-c/komikku-Modify/releases) and the already opened [issues](https://github.com/ying-c/komikku-Modify/issues).**
+2. If you are unsure, ask in the [Komikku Discord](https://discord.gg/85jB7V5AJR).
 
 </details>
 
@@ -145,13 +164,12 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 
 * Include version (More → About → Version)
  * If not latest, try updating, it may have already been solved
- * Preview version is equal to the number of commits as seen on the main page
 * Include steps to reproduce (if not obvious from description)
 * Include screenshot (if needed)
 * If it could be device-dependent, try reproducing on another device (if possible)
 * Don't group unrelated requests into one issue
 
-Use the [issue forms](https://github.com/komikku-app/komikku/issues/new/choose) to submit a bug.
+Use the [issue forms](https://github.com/ying-c/komikku-Modify/issues/new/choose) to submit a bug.
 
 </details>
 
@@ -159,11 +177,6 @@ Use the [issue forms](https://github.com/komikku-app/komikku/issues/new/choose) 
 
 * Write a detailed issue, explaining what it should do or how.
 * Include screenshot (if needed).
-</details>
-
-<details><summary>Contributing</summary>
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md).
 </details>
 
 <details><summary>Code of Conduct</summary>
